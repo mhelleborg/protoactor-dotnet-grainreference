@@ -1,29 +1,34 @@
+using System;
 using System.Threading.Tasks;
-using Cluster.HelloWorld.Messages;
+using Hello.Messages;
 using Proto;
 using Proto.Cluster;
 using static System.Threading.Tasks.Task;
+
 namespace ConsoleApp13
 {
-    class HelloGrain : IHelloGrain
+    class HelloGrain : HelloGrainBase
     {
-        private readonly IContext _ctx;
-        private readonly string _id;
         private HelloGrainState _state;
 
-        public HelloGrain(IContext ctx)
+        public HelloGrain(IContext ctx) : base(ctx)
         {
-            _ctx = ctx;
-            _id = ctx.ClusterIdentity()!.Identity;
+        }
+
+        public override Task OnStarted()
+        {
             _state = new HelloGrainState();
-        } 
-        public Task<HelloResponse> SayHello(HelloRequest request) =>
+            Console.WriteLine("Started");
+            return base.OnStarted();
+        }
+
+        public override Task<HelloResponse> SayHello(HelloRequest request) =>
             FromResult(new HelloResponse()
             {
                 Message = "Pretty cool!"
             });
 
-        public Task<GetCurrentStateResponse> GetCurrentState(GetCurrentStateRequest request) =>
+        public override Task<GetCurrentStateResponse> GetCurrentState(GetCurrentStateRequest request) =>
             FromResult(new GetCurrentStateResponse()
             {
                 State = _state
