@@ -1,0 +1,27 @@
+syntax = "proto3";
+package messages;
+option csharp_namespace = "Cluster.HelloWorld.Messages";
+
+message HelloRequest {
+  string name = 1;
+}
+message HelloResponse {
+  string message=1;
+}
+
+message GetCurrentStateRequest {}
+message GetCurrentStateResponse {
+  HelloGrainState state = 1;
+}
+
+message HelloGrainState {
+  string name =1;
+  int32 age = 2;
+}
+
+service HelloGrain {
+  
+  rpc SayHello(HelloRequest) returns (HelloResponse) {}
+  rpc GetCurrentState(GetCurrentStateRequest) returns (GetCurrentStateResponse) {}
+  
+}
