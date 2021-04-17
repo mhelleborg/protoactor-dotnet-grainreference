@@ -3,6 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleGrainGenerator", "ExampleGrainGenerator\ExampleGrainGenerator.csproj", "{5AD5A280-A569-47F3-8BE8-73BF9642EE29}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".meta", ".meta", "{FBC7BADE-ADDF-4BF3-B93F-27BED660C1FD}"
+ProjectSection(SolutionItems) = preProject
+	NuGet.Config = NuGet.Config
+EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
