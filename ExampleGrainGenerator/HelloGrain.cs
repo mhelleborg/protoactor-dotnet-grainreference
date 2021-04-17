@@ -19,7 +19,7 @@ namespace ConsoleApp13
         {
             _state = new HelloGrainState();
             Console.WriteLine("Started");
-            return base.OnStarted();
+            return CompletedTask;
         }
 
         public override Task<HelloResponse> SayHello(HelloRequest request) =>

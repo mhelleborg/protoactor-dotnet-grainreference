@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Proto;
 using Proto.Cluster;
 
-namespace Cluster.HelloWorld.Messages
+namespace Hello.Messages
 {
     public static class Grains
     {
@@ -21,21 +21,36 @@ namespace Cluster.HelloWorld.Messages
     
     public static class GrainExtensions
     {
-        public static HelloGrainClient GetHelloGrain(this Proto.Cluster.Cluster cluster, string identity) => new(cluster, identity);
+        public static ClusterConfig WithMyGrainsKinds(this ClusterConfig config) => 
+         config.WithClusterKinds(Grains.GetClusterKinds());
+    
+        public static HelloGrainClient GetHelloGrain(this Cluster cluster, string identity) => new(cluster, identity);
     }
 
-    public interface IHelloGrain
+    public abstract class HelloGrainBase
     {
-        Task<HelloResponse> SayHello(HelloRequest request);
-        Task<GetCurrentStateResponse> GetCurrentState(GetCurrentStateRequest request);
+        protected IContext Context {get;}
+    
+        protected HelloGrainBase(IContext context)
+        {
+            Context = context;
+        }
+        
+        public virtual Task OnStarted() => Task.CompletedTask;
+        public virtual Task OnStopping() => Task.CompletedTask;
+        public virtual Task OnStopped() => Task.CompletedTask;
+        public virtual Task OnReceive() => Task.CompletedTask;
+    
+        public abstract Task<HelloResponse> SayHello(HelloRequest request);
+        public abstract Task<GetCurrentStateResponse> GetCurrentState(GetCurrentStateRequest request);
     }
 
     public class HelloGrainClient
     {
         private readonly string _id;
-        private readonly Proto.Cluster.Cluster _cluster;
+        private readonly Cluster _cluster;
 
-        public HelloGrainClient(Proto.Cluster.Cluster cluster, string id)
+        public HelloGrainClient(Cluster cluster, string id)
         {
             _id = id;
             _cluster = cluster;
@@ -77,7 +92,7 @@ namespace Cluster.HelloWorld.Messages
 
     class HelloGrainActor : IActor
     {
-        private IHelloGrain _inner;
+        private HelloGrainBase _inner;
 
         public async Task ReceiveAsync(IContext context)
         {
@@ -85,15 +100,20 @@ namespace Cluster.HelloWorld.Messages
             {
                 case ClusterInit msg: 
                 {
-                    _inner = Grains.Factory<IHelloGrain>.Create(context, msg.Identity, msg.Kind);
-                    context.SetReceiveTimeout(TimeSpan.FromSeconds(30));
+                    _inner = Grains.Factory<HelloGrainBase>.Create(context, msg.Identity, msg.Kind);
+                    await _inner.OnStarted();
                     break;
                 }
-                case ReceiveTimeout:
+                case Stopping:
                 {
-                    context.Stop(context.Self!);
+                    await _inner.OnStopping();
                     break;
                 }
+                case Stopped:
+                {
+                    await _inner.OnStopped();
+                    break;
+                }    
                 case GrainRequestMessage(var methodIndex, var r):
                 {
                     switch (methodIndex)
@@ -138,6 +158,11 @@ namespace Cluster.HelloWorld.Messages
                         }
                     }
 
+                    break;
+                }
+                default:
+                {
+                    await _inner.OnReceive();
                     break;
                 }
             }
