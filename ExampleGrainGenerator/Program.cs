@@ -1,5 +1,5 @@
 ﻿using System;
-using Hello.Messages;
+using ExampleGrainGenerator;
 using Proto;
 using Proto.Cluster;
 using Proto.Cluster.Consul;
@@ -7,13 +7,11 @@ using Proto.Cluster.Partition;
 using Proto.Remote.GrpcCore;
 using Proto.Remote;
 using static Proto.CancellationTokens;
-using HelloGrain = ConsoleApp13.HelloGrain;
-
 
 var system = new ActorSystem()
     .WithRemote(GrpcCoreRemoteConfig
         .BindToLocalhost()
-        .WithProtoMessages(Hello.Messages.ProtosReflection.Descriptor))
+        .WithProtoMessages(ExampleGrainGenerator.ProtosReflection.Descriptor))
     .WithCluster(ClusterConfig
         .Setup("MyCluster", new ConsulProvider(new ConsulProviderConfig()), new PartitionIdentityLookup())
         .WithMyGrainsKinds()

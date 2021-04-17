@@ -1,37 +1,34 @@
 using System;
 using System.Threading.Tasks;
-using Hello.Messages;
+using ExampleGrainGenerator;
 using Proto;
-using Proto.Cluster;
 using static System.Threading.Tasks.Task;
+#pragma warning disable 1998
 
-namespace ConsoleApp13
+class HelloGrain : HelloGrainBase
 {
-    class HelloGrain : HelloGrainBase
+    private HelloGrainState _state;
+
+    public HelloGrain(IContext ctx) : base(ctx)
     {
-        private HelloGrainState _state;
-
-        public HelloGrain(IContext ctx) : base(ctx)
-        {
-        }
-
-        public override Task OnStarted()
-        {
-            _state = new HelloGrainState();
-            Console.WriteLine("Started");
-            return CompletedTask;
-        }
-
-        public override Task<HelloResponse> SayHello(HelloRequest request) =>
-            FromResult(new HelloResponse()
-            {
-                Message = "Pretty cool!"
-            });
-
-        public override Task<GetCurrentStateResponse> GetCurrentState(GetCurrentStateRequest request) =>
-            FromResult(new GetCurrentStateResponse()
-            {
-                State = _state
-            });
     }
+
+    public override Task OnStarted()
+    {
+        _state = new HelloGrainState();
+        Console.WriteLine("Started");
+        return CompletedTask;
+    }
+
+    public override async Task<HelloResponse> SayHello(HelloRequest request) =>
+        new()
+        {
+            Message = $"Hello {request.Name}, pretty cool, right?"
+        };
+
+    public override async Task<GetCurrentStateResponse> GetCurrentState(GetCurrentStateRequest request) =>
+        new()
+        {
+            State = _state
+        };
 }

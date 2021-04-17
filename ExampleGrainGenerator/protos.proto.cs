@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Proto;
 using Proto.Cluster;
 
-namespace Hello.Messages
+namespace ExampleGrainGenerator
 {
     public static class Grains
     {

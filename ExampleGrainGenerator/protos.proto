@@ -1,6 +1,6 @@
 syntax = "proto3";
 package MyGrains;
-option csharp_namespace = "Hello.Messages";
+option csharp_namespace = "ExampleGrainGenerator";
 
 message HelloRequest {
   string name = 1;
