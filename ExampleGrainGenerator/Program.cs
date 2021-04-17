@@ -1,5 +1,6 @@
 ﻿using System;
 using ExampleGrainGenerator;
+using ExampleGrainGenerator.Generated;
 using Proto;
 using Proto.Cluster;
 using Proto.Cluster.Consul;

@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using ExampleGrainGenerator;
+using ExampleGrainGenerator.Generated;
 using Proto;
 using static System.Threading.Tasks.Task;
 #pragma warning disable 1998
