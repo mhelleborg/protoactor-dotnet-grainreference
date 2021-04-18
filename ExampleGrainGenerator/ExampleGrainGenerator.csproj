@@ -13,14 +13,11 @@
       <PackageReference Include="Proto.Cluster" Version="0.16.1-alpha.0.80" />
       <PackageReference Include="Proto.Cluster.Consul" Version="0.16.1-alpha.0.80" />
       <PackageReference Include="Proto.Remote.GrpcCore" Version="0.16.1-alpha.0.80" />
-      <PackageReference Include="ProtoGrainGenerator" Version="0.16.1-alpha.0.94" />
+      <PackageReference Include="ProtoGrainGenerator" Version="0.16.1-alpha.0.97" />
     </ItemGroup>
 
     <ItemGroup>
       <Protobuf Include="protos.proto" />
     </ItemGroup>
 
-    <Target Name="Generate" BeforeTargets="PrepareForBuild">
-        <ProtoGen BaseIntermediateOutputPath="$(IntermediateOutputPath)" />
-    </Target>
 </Project>
