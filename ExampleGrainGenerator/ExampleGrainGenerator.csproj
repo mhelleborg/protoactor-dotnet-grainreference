@@ -10,14 +10,19 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="Proto.Cluster" Version="0.16.1-alpha.0.80" />
-      <PackageReference Include="Proto.Cluster.Consul" Version="0.16.1-alpha.0.80" />
-      <PackageReference Include="Proto.Remote.GrpcCore" Version="0.16.1-alpha.0.80" />
-      <PackageReference Include="ProtoGrainGenerator" Version="0.16.1-alpha.0.98" />
+      <PackageReference Include="Proto.Cluster" Version="0.16.1-alpha.0.106" />
+      <PackageReference Include="Proto.Cluster.Consul" Version="0.16.1-alpha.0.106" />
+      <PackageReference Include="Proto.Remote.GrpcCore" Version="0.16.1-alpha.0.106" />
+      <PackageReference Include="ProtoGrainGenerator" Version="0.16.1-alpha.0.106" />
     </ItemGroup>
 
     <ItemGroup>
       <Protobuf Include="protos.proto" />
     </ItemGroup>
+
+    <Target Name="Generate" BeforeTargets="PrepareForBuild" >
+        <ProtoGen IntermediateOutputPath="$(IntermediateOutputPath)" MSBuildProjectFullPath="$(MSBuildProjectFullPath)" TemplatePath="template.handlebars"  />
+    </Target>
+
 
 </Project>

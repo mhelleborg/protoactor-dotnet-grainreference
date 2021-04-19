@@ -32,8 +32,8 @@ var helloGrain = system.Cluster().GetHelloGrain("MyGrain");
 var res = await helloGrain.SayHello(new HelloRequest()
 {
     Name = "Proto Potato"
-}, WithTimeout(1000));
+}, WithTimeout(10000));
 
-await helloGrain.GetCurrentState(new GetCurrentStateRequest(), WithTimeout(1000));
+await helloGrain.GetCurrentState(new GetCurrentStateRequest(), WithTimeout(10000));
 Console.WriteLine(res.Message);
 

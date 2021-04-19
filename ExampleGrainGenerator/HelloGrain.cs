@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using ExampleGrainGenerator;
 using Proto;
 using static System.Threading.Tasks.Task;
+
 #pragma warning disable 1998
 
 class HelloGrain : HelloGrainBase
@@ -18,6 +19,21 @@ class HelloGrain : HelloGrainBase
         _state = new HelloGrainState();
         Console.WriteLine("Started");
         return CompletedTask;
+    }
+
+    
+    public override Task SayHello(HelloRequest request, Action<IContext, HelloResponse> respond,
+        Action<IContext, string> onError)
+    {
+        if (new Random().NextDouble() > .5)
+        {
+            Context.ReenterAfter(Task.Delay(100), () => respond(Context, new HelloResponse
+            {
+                Message = $"Reentrant hello {request.Name}!"
+            }));
+            return CompletedTask;
+        }
+        else return base.SayHello(request, respond, onError);
     }
 
     public override async Task<HelloResponse> SayHello(HelloRequest request) =>
