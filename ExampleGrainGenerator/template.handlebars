@@ -6,144 +6,152 @@ using Proto.Cluster;
 
 namespace {{CsNamespace}}
 {
-public static class Grains
-{
-public static class Factory<T>
+    public static class Grains
     {
-    public static Func<IContext,string,string,T> Create;
-    }
-
-    public static (string,Props)[] GetClusterKinds()  => new[] {
-    {{#each Services}}
-        ("{{Name}}", Props.FromProducer(() => new {{Name}}Actor())),
-    {{/each}}
-    };
-    }
-
+        public static class Factory<T>
+        {
+            public static Func<IContext,string,string,T> Create;
+        }
+        
+        public static (string,Props)[] GetClusterKinds()  => new[] { 
+            {{#each Services}}	
+                ("{{Name}}", Props.FromProducer(() => new {{Name}}Actor())),
+            {{/each}}
+            };
+    }        
+    
     public static class GrainExtensions
     {
-    public static ClusterConfig With{{PackageName}}Kinds(this ClusterConfig config) =>
-    config.WithClusterKinds(Grains.GetClusterKinds());
-
-    {{#each Services}}
+        public static ClusterConfig With{{PackageName}}Kinds(this ClusterConfig config) => 
+         config.WithClusterKinds(Grains.GetClusterKinds());
+    
+        {{#each Services}}
         public static {{Name}}Client Get{{Name}}(this Cluster cluster, string identity) => new(cluster, identity);
-    {{/each}}
+        {{/each}}
     }
 
-    {{#each Services}}
-        public abstract class {{Name}}Base
-        {
+	{{#each Services}}	
+    public abstract class {{Name}}Base
+    {
         protected IContext Context {get;}
-
+    
         protected {{Name}}Base(IContext context)
         {
-        Context = context;
+            Context = context;
         }
-
+        
         public virtual Task OnStarted() => Task.CompletedTask;
         public virtual Task OnStopping() => Task.CompletedTask;
         public virtual Task OnStopped() => Task.CompletedTask;
         public virtual Task OnReceive() => Task.CompletedTask;
 
         {{#each Methods}}
-            public virtual async Task {{Name}}({{InputName}} request, Action<{{OutputName}}> respond, Action<string> onError){
-                try
-                {
+        public virtual async Task {{Name}}({{InputName}} request, Action<{{OutputName}}> respond, Action<string> onError)
+        {
+            try
+            {
                 var res = await {{Name}}(request);
                 respond(res);
-                }
-                catch (Exception x)
-                {
-                    onError(x.ToString());
-                }
             }
+            catch (Exception x)
+            {
+                onError(x.ToString());
+            }
+        }
         {{/each}}
     
-        {{#each Methods}}
-            public abstract Task<{{OutputName}}> {{Name}}({{InputName}} request);
-        {{/each}}
-        }
+		{{#each Methods}}
+        public abstract Task<{{OutputName}}> {{Name}}({{InputName}} request);
+		{{/each}}
+    }
 
-        public class {{Name}}Client
-        {
+    public class {{Name}}Client
+    {
         private readonly string _id;
         private readonly Cluster _cluster;
 
         public {{Name}}Client(Cluster cluster, string id)
         {
-        _id = id;
-        _cluster = cluster;
+            _id = id;
+            _cluster = cluster;
         }
 
-        {{#each Methods}}
-            public async Task<{{OutputName}}> {{Name}}({{InputName}} request, CancellationToken ct)
-            {
+		{{#each Methods}}
+        public async Task<{{OutputName}}> {{Name}}({{InputName}} request, CancellationToken ct)
+        {
             var gr = new GrainRequestMessage({{Index}}, request);
             //request the RPC method to be invoked
             var res = await _cluster.RequestAsync<object>(_id, "{{../Name}}", gr, ct);
 
             return res switch
             {
-            // normal response
-            GrainResponseMessage grainResponse => ({{OutputName}})grainResponse.ResponseMessage,
-            // error response
-            GrainErrorResponse grainErrorResponse => throw new Exception(grainErrorResponse.Err),
-            // unsupported response
-            _ => throw new NotSupportedException()
+                // normal response
+                GrainResponseMessage grainResponse => ({{OutputName}})grainResponse.ResponseMessage,
+                // error response
+                GrainErrorResponse grainErrorResponse => throw new Exception(grainErrorResponse.Err),
+                // unsupported response
+                _ => throw new NotSupportedException()
             };
-            }
-        {{/each}}
         }
+		{{/each}}
+    }
 
-        class {{Name}}Actor : IActor
-        {
+    class {{Name}}Actor : IActor
+    {
         private {{Name}}Base _inner;
 
         public async Task ReceiveAsync(IContext context)
         {
-        switch (context.Message)
-        {
-        case Started:
-        {
-        var id = context.Get<ClusterIdentity>();
-        _inner = Grains.Factory<{{Name}}Base>.Create(context, id.Identity, id.Kind);
-        await _inner.OnStarted();
-        break;
-        }
-        case Stopping:
-        {
-        await _inner.OnStopping();
-        break;
-        }
-        case Stopped:
-        {
-        await _inner.OnStopped();
-        break;
-        }
-        case GrainRequestMessage(var methodIndex, var r):
-        {
-        switch (methodIndex)
-        {
-        {{#each Methods}}
-            case {{Index}}:
+            switch (context.Message)
             {
-            await _inner.{{Name}}(({{InputName}})r, res => context.Respond( new GrainResponseMessage(res) ), error => context.Respond( new GrainErrorResponse {Err = error } ));
+                case ClusterInit msg: 
+                {
+                    _inner = Grains.Factory<{{Name}}Base>.Create(context, msg.Identity, msg.Kind);
+                    await _inner.OnStarted();
+                    break;
+                }
+                case Stopping:
+                {
+                    await _inner.OnStopping();
+                    break;
+                }
+                case Stopped:
+                {
+                    await _inner.OnStopped();
+                    break;
+                }    
+                case GrainRequestMessage(var methodIndex, var r):
+                {
+                    Action<string> onError = error => context.Respond( new GrainErrorResponse {Err = error } );
 
-            break;
+                    switch (methodIndex)
+                    {
+			            {{#each Methods}}
+                        case {{Index}}:
+                        {   
+                            if(r is {{InputName}} input){
+                                await _inner.{{Name}}(input, res => context.Respond( new GrainResponseMessage(res) ), onError);
+                            } else {
+                                onError("Invalid client contract");
+                            }
+
+                            break;
+                        }
+			            {{/each}}
+                        default:
+                            onError("Invalid client contract");
+                            break;
+                    }
+
+                    break;
+                }
+                default:
+                {
+                    await _inner.OnReceive();
+                    break;
+                }
             }
-        {{/each}}
         }
-
-        break;
-        }
-        default:
-        {
-            await _inner.OnReceive();
-            break;
-        }
-        }
-        }
-        }
-    {{/each}}
-
     }
+	{{/each}}	
+}
