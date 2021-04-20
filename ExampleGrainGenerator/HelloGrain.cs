@@ -22,12 +22,11 @@ class HelloGrain : HelloGrainBase
     }
 
     
-    public override Task SayHello(HelloRequest request, Action<IContext, HelloResponse> respond,
-        Action<IContext, string> onError)
+    public override Task SayHello(HelloRequest request, Action<HelloResponse> respond, Action<string> onError)
     {
         if (new Random().NextDouble() > .5)
         {
-            Context.ReenterAfter(Task.Delay(100), () => respond(Context, new HelloResponse
+            Context.ReenterAfter(Task.Delay(100), () => respond(new HelloResponse
             {
                 Message = $"Reentrant hello {request.Name}!"
             }));

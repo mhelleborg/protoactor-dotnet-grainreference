@@ -46,15 +46,15 @@ public static class Factory<T>
         public virtual Task OnReceive() => Task.CompletedTask;
 
         {{#each Methods}}
-            public virtual async Task {{Name}}({{InputName}} request, Action<IContext, {{OutputName}}> respond, Action<IContext, string> onError){
+            public virtual async Task {{Name}}({{InputName}} request, Action<{{OutputName}}> respond, Action<string> onError){
                 try
                 {
                 var res = await {{Name}}(request);
-                respond(Context, res);
+                respond(res);
                 }
                 catch (Exception x)
                 {
-                    onError(Context, x.ToString());
+                    onError(x.ToString());
                 }
             }
         {{/each}}
@@ -127,7 +127,7 @@ public static class Factory<T>
         {{#each Methods}}
             case {{Index}}:
             {
-            await _inner.{{Name}}(({{InputName}})r, RespondTo{{Name}}, SendErrorResponse);
+            await _inner.{{Name}}(({{InputName}})r, res => context.Respond( new GrainResponseMessage(res) ), error => context.Respond( new GrainErrorResponse {Err = error } ));
 
             break;
             }
@@ -143,11 +143,6 @@ public static class Factory<T>
         }
         }
         }
-        {{#each Methods}}
-        private static void RespondTo{{Name}}(IContext context, {{OutputName}} res) => context.Respond( new GrainResponseMessage(res));
-        {{/each}}
-
-        private static void SendErrorResponse(IContext context, string error) => context.Respond( new GrainErrorResponse {Err = error });
         }
     {{/each}}
 
